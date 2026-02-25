@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Bing Wallpaper Settings
+Comment=Configure Bing Daily Wallpaper applet
+Exec=cosmic-applet-settings bing-wallpaper
+Icon=preferences-desktop-wallpaper-symbolic
+Type=Application
+Categories=Settings;DesktopSettings;
+Keywords=bing;wallpaper;settings;applet;

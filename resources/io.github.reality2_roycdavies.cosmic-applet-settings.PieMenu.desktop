@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Pie Menu Settings
+Comment=Configure gesture-based Pie Menu applet
+Exec=cosmic-applet-settings pie-menu
+Icon=input-touchpad-symbolic
+Type=Application
+Categories=Settings;HardwareSettings;
+Keywords=pie;menu;gesture;touchpad;settings;applet;

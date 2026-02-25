@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Tailscale VPN Settings
+Comment=Configure Tailscale VPN applet
+Exec=cosmic-applet-settings tailscale
+Icon=network-vpn-symbolic
+Type=Application
+Categories=Settings;Network;
+Keywords=tailscale;vpn;settings;applet;

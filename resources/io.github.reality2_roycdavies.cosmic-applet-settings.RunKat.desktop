@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=RunKat Settings
+Comment=Configure RunKat CPU indicator applet
+Exec=cosmic-applet-settings runkat
+Icon=utilities-system-monitor-symbolic
+Type=Application
+Categories=Settings;System;
+Keywords=runkat;cpu;cat;settings;applet;

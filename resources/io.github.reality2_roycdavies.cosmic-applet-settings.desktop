@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Applet Settings
+Comment=Unified settings for custom COSMIC applets
+Exec=cosmic-applet-settings
+Icon=io.github.reality2_roycdavies.cosmic-applet-settings
+Type=Application
+Categories=Settings;
+StartupNotify=true

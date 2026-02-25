@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Gear outer shape -->
+  <path d="M32 8 L36 8 L37 14 L42 16 L47 12 L50 15 L46 21 L48 26 L54 27 L54 31 L48 32 L46 37 L50 43 L47 46 L42 42 L37 44 L36 50 L32 50 L31 44 L26 42 L21 46 L18 43 L22 37 L20 32 L14 31 L14 27 L20 26 L22 21 L18 15 L21 12 L26 16 L31 14 Z"
+        fill="none" stroke="#333" stroke-width="2" stroke-linejoin="round"/>
+  <!-- Gear center circle -->
+  <circle cx="34" cy="29" r="7" fill="none" stroke="#333" stroke-width="2"/>
+  <!-- Grid dots representing multiple applets -->
+  <rect x="28" y="23" width="4" height="4" rx="1" fill="#333" opacity="0.6"/>
+  <rect x="34" y="23" width="4" height="4" rx="1" fill="#333" opacity="0.6"/>
+  <rect x="28" y="29" width="4" height="4" rx="1" fill="#333" opacity="0.6"/>
+  <rect x="34" y="29" width="4" height="4" rx="1" fill="#333" opacity="0.6"/>
+</svg>

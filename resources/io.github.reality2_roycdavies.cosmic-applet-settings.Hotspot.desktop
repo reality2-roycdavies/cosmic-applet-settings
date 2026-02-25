@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=WiFi Hotspot Settings
+Comment=Configure WiFi Hotspot applet
+Exec=cosmic-applet-settings hotspot
+Icon=network-wireless-hotspot-symbolic
+Type=Application
+Categories=Settings;Network;
+Keywords=wifi;hotspot;settings;applet;

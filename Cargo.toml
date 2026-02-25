@@ -1,0 +1,26 @@
+[package]
+name = "cosmic-applet-settings"
+version = "0.1.0"
+edition = "2021"
+authors = ["Roy C. Davies"]
+license = "MIT"
+description = "Unified settings app for custom COSMIC applets"
+
+[dependencies]
+# COSMIC GUI toolkit (full app, not applet)
+libcosmic = { git = "https://github.com/pop-os/libcosmic.git", default-features = false, features = [
+    "a11y",
+    "winit",
+    "wgpu",
+] }
+
+# Applet libraries
+cosmic-tailscale = { path = "../cosmic-tailscale" }
+cosmic-runkat = { path = "../cosmic-runkat" }
+cosmic-bing-wallpaper = { path = "../cosmic-bing-wallpaper" }
+cosmic-pie-menu = { path = "../cosmic-pie-menu" }
+cosmic-hotspot = { path = "../cosmic-hotspot" }
+
+[profile.release]
+lto = true
+codegen-units = 1
