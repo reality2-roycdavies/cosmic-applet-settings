@@ -1,5 +1,5 @@
 use cosmic::app::Core;
-use cosmic::iced::widget::{column, container, horizontal_space, row, scrollable, Space};
+use cosmic::iced::widget::{column, container, horizontal_space, row, scrollable};
 use cosmic::iced::{Alignment, Length};
 use cosmic::widget::{button, icon, text};
 use cosmic::{Action, Application, Element, Task};
@@ -108,21 +108,8 @@ impl Application for SettingsApp {
         let sidebar = self.sidebar_view();
         let page_content = self.page_view();
 
-        let divider = container(Space::new(Length::Fixed(1.0), Length::Fill)).style(
-            |theme: &cosmic::Theme| {
-                let cosmic = theme.cosmic();
-                container::Style {
-                    background: Some(cosmic::iced::Background::Color(cosmic::iced::Color::from(
-                        cosmic.palette.neutral_5,
-                    ))),
-                    ..Default::default()
-                }
-            },
-        );
-
         row![
-            sidebar,
-            divider,
+            container(sidebar).padding([8, 8, 8, 8]),
             scrollable(
                 container(container(page_content).max_width(800))
                     .width(Length::Fill)
@@ -231,7 +218,19 @@ impl SettingsApp {
 
         container(sidebar_items)
             .width(Length::Fixed(240.0))
-            .height(Length::Fill)
+            .style(|theme: &cosmic::Theme| {
+                let cosmic = theme.cosmic();
+                container::Style {
+                    background: Some(cosmic::iced::Background::Color(
+                        cosmic::iced::Color::from(cosmic.bg_component_color()),
+                    )),
+                    border: cosmic::iced::Border {
+                        radius: cosmic.corner_radii.radius_m.into(),
+                        ..Default::default()
+                    },
+                    ..Default::default()
+                }
+            })
             .into()
     }
 
