@@ -82,9 +82,9 @@ cosmic-applet-settings pie-menu
 cosmic-applet-settings hotspot
 ```
 
-## Related COSMIC Applets
+## Managed Applets
 
-This is part of a suite of custom applets for the COSMIC desktop:
+This settings app provides configuration for the following COSMIC applets:
 
 | Applet | Description |
 |--------|-------------|
@@ -93,10 +93,13 @@ This is part of a suite of custom applets for the COSMIC desktop:
 | **[cosmic-pie-menu](https://github.com/reality2-roycdavies/cosmic-pie-menu)** | Radial/pie menu app launcher with gesture support |
 | **[cosmic-tailscale](https://github.com/reality2-roycdavies/cosmic-tailscale)** | Tailscale VPN status and control applet |
 | **[cosmic-hotspot](https://github.com/reality2-roycdavies/cosmic-hotspot)** | WiFi hotspot toggle applet |
+
+### Other Related Projects
+
+| Project | Description |
+|---------|-------------|
 | **[cosmic-konnect](https://github.com/reality2-roycdavies/cosmic-konnect)** | Device connectivity and sync between Linux and Android |
 | **[cosmic-konnect-android](https://github.com/reality2-roycdavies/cosmic-konnect-android)** | Android companion app for Cosmic Konnect |
-
-All applets can be configured through this unified settings app.
 
 ## License
 
