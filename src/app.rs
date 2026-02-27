@@ -1,7 +1,9 @@
 use cosmic::app::Core;
 use cosmic::iced::widget::{column, container, horizontal_space, row, scrollable};
 use cosmic::iced::{Alignment, Length};
-use cosmic::widget::{button, icon, text};
+use cosmic::iced::Background;
+use cosmic::widget::button::{self, Style as ButtonStyle};
+use cosmic::widget::{icon, text};
 use cosmic::{Action, Application, Element, Task};
 
 use cosmic_tailscale::settings_page as tailscale_page;
@@ -190,7 +192,11 @@ impl SettingsApp {
     }
 
     fn sidebar_view(&self) -> Element<'_, Message> {
-        let mut sidebar_items = column![].spacing(4).padding(8);
+        let spacing = cosmic::theme::spacing();
+        let space_xxs = spacing.space_xxs;
+        let space_s = spacing.space_s;
+
+        let mut sidebar_items = column![].spacing(space_xxs).padding(space_xxs);
 
         for &page in &self.active_pages {
             let is_active = page == self.active_page;
@@ -200,20 +206,21 @@ impl SettingsApp {
                 text::body(page.title()),
                 horizontal_space(),
             ]
-            .spacing(8)
+            .spacing(space_xxs)
             .align_y(Alignment::Center);
 
-            let btn = if is_active {
-                button::custom(item_content)
-                    .on_press(Message::SelectPage(page))
-                    .class(cosmic::theme::Button::Suggested)
-            } else {
-                button::custom(item_content)
-                    .on_press(Message::SelectPage(page))
-                    .class(cosmic::theme::Button::MenuItem)
-            };
+            let btn = button::custom(item_content)
+                .on_press(Message::SelectPage(page))
+                .class(if is_active {
+                    nav_active_style()
+                } else {
+                    nav_inactive_style()
+                });
 
-            sidebar_items = sidebar_items.push(btn.width(Length::Fill).padding([8, 12]));
+            sidebar_items = sidebar_items.push(
+                btn.width(Length::Fill)
+                    .padding([space_xxs, space_s, space_xxs, space_s]),
+            );
         }
 
         container(sidebar_items)
@@ -223,10 +230,10 @@ impl SettingsApp {
                 let cosmic = theme.cosmic();
                 container::Style {
                     background: Some(cosmic::iced::Background::Color(
-                        cosmic::iced::Color::from(cosmic.bg_component_color()),
+                        cosmic::iced::Color::from(cosmic.primary_container_color()),
                     )),
                     border: cosmic::iced::Border {
-                        radius: cosmic.corner_radii.radius_m.into(),
+                        radius: cosmic.corner_radii.radius_s.into(),
                         ..Default::default()
                     },
                     ..Default::default()
@@ -285,4 +292,62 @@ pub fn run_app(flags: AppFlags) -> cosmic::iced::Result {
                 .min_height(450.0),
         );
     cosmic::app::run::<SettingsApp>(settings, flags)
+}
+
+fn nav_active_style() -> cosmic::theme::Button {
+    fn style(focused: bool, theme: &cosmic::Theme) -> ButtonStyle {
+        let cosmic = theme.cosmic();
+        let mut s = ButtonStyle::new();
+        s.background = Some(Background::Color(
+            cosmic.primary.component.hover.into(),
+        ));
+        s.text_color = Some(cosmic.accent_text_color().into());
+        s.icon_color = Some(cosmic.accent_text_color().into());
+        s.border_radius = cosmic.corner_radii.radius_xl.into();
+        if focused {
+            s.outline_width = 1.0;
+            s.outline_color = cosmic.accent.base.into();
+            s.border_width = 2.0;
+            s.border_color = cosmic::iced::Color::TRANSPARENT;
+        }
+        s
+    }
+    cosmic::theme::Button::Custom {
+        active: Box::new(style),
+        disabled: Box::new(|theme| style(false, theme)),
+        hovered: Box::new(style),
+        pressed: Box::new(style),
+    }
+}
+
+fn nav_inactive_style() -> cosmic::theme::Button {
+    fn style(focused: bool, theme: &cosmic::Theme) -> ButtonStyle {
+        let cosmic = theme.cosmic();
+        let mut s = ButtonStyle::new();
+        s.background = None;
+        s.text_color = Some(cosmic.background.on.into());
+        s.icon_color = Some(cosmic.background.on.into());
+        s.border_radius = cosmic.corner_radii.radius_xl.into();
+        if focused {
+            s.outline_width = 1.0;
+            s.outline_color = cosmic.accent.base.into();
+            s.border_width = 2.0;
+            s.border_color = cosmic::iced::Color::TRANSPARENT;
+        }
+        s
+    }
+    fn hovered(focused: bool, theme: &cosmic::Theme) -> ButtonStyle {
+        let cosmic = theme.cosmic();
+        let mut s = style(focused, theme);
+        s.background = Some(Background::Color(
+            cosmic.primary.component.base.into(),
+        ));
+        s
+    }
+    cosmic::theme::Button::Custom {
+        active: Box::new(style),
+        disabled: Box::new(|theme| style(false, theme)),
+        hovered: Box::new(hovered),
+        pressed: Box::new(hovered),
+    }
 }
