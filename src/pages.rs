@@ -38,11 +38,21 @@ impl Page {
 
     pub fn icon_name(&self) -> &'static str {
         match self {
-            Page::Tailscale => "network-vpn-symbolic",
-            Page::RunKat => "utilities-system-monitor-symbolic",
-            Page::BingWallpaper => "preferences-desktop-wallpaper-symbolic",
-            Page::PieMenu => "input-touchpad-symbolic",
-            Page::Hotspot => "network-wireless-hotspot-symbolic",
+            Page::Tailscale => "io.github.reality2_roycdavies.cosmic-tailscale-symbolic",
+            Page::RunKat => "io.github.reality2_roycdavies.cosmic-runkat-symbolic",
+            Page::BingWallpaper => "io.github.reality2_roycdavies.cosmic-bing-wallpaper-symbolic",
+            Page::PieMenu => "io.github.reality2_roycdavies.cosmic-pie-menu-symbolic",
+            Page::Hotspot => "io.github.reality2_roycdavies.cosmic-hotspot-symbolic",
+        }
+    }
+
+    pub fn applet_id(&self) -> &'static str {
+        match self {
+            Page::Tailscale => "io.github.reality2_roycdavies.cosmic-tailscale",
+            Page::RunKat => "io.github.reality2_roycdavies.cosmic-runkat",
+            Page::BingWallpaper => "io.github.reality2_roycdavies.cosmic-bing-wallpaper",
+            Page::PieMenu => "io.github.reality2_roycdavies.cosmic-pie-menu",
+            Page::Hotspot => "io.github.reality2_roycdavies.cosmic-hotspot",
         }
     }
 

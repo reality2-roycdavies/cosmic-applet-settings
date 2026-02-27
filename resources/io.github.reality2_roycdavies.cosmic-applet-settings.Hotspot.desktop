@@ -2,7 +2,7 @@
 Name=WiFi Hotspot Settings
 Comment=Configure WiFi Hotspot applet
 Exec=cosmic-applet-settings hotspot
-Icon=network-wireless-hotspot-symbolic
+Icon=io.github.reality2_roycdavies.cosmic-hotspot
 Type=Application
 Categories=Settings;Network;
 Keywords=wifi;hotspot;settings;applet;

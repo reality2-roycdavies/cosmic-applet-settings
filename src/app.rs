@@ -14,9 +14,15 @@ use crate::pages::Page;
 
 const APP_ID: &str = "io.github.reality2_roycdavies.cosmic-applet-settings";
 
+pub struct AppFlags {
+    pub initial_page: Page,
+    pub active_pages: Vec<Page>,
+}
+
 pub struct SettingsApp {
     core: Core,
     active_page: Page,
+    active_pages: Vec<Page>,
     tailscale: Option<tailscale_page::State>,
     runkat: Option<runkat_page::State>,
     bing_wallpaper: Option<bing_wallpaper_page::State>,
@@ -36,7 +42,7 @@ pub enum Message {
 
 impl Application for SettingsApp {
     type Executor = cosmic::executor::Default;
-    type Flags = Page;
+    type Flags = AppFlags;
     type Message = Message;
 
     const APP_ID: &'static str = APP_ID;
@@ -49,10 +55,18 @@ impl Application for SettingsApp {
         &mut self.core
     }
 
-    fn init(core: Core, initial_page: Self::Flags) -> (Self, Task<Action<Self::Message>>) {
-        let app = Self {
+    fn init(core: Core, flags: Self::Flags) -> (Self, Task<Action<Self::Message>>) {
+        let mut active_pages = flags.active_pages;
+
+        // If the initial page was explicitly requested but isn't in active_pages, include it
+        if !active_pages.contains(&flags.initial_page) {
+            active_pages.insert(0, flags.initial_page);
+        }
+
+        let mut app = Self {
             core,
-            active_page: initial_page,
+            active_page: flags.initial_page,
+            active_pages,
             tailscale: None,
             runkat: None,
             bing_wallpaper: None,
@@ -61,8 +75,7 @@ impl Application for SettingsApp {
         };
 
         // Eagerly init the initial page
-        let mut app = app;
-        app.ensure_page_init(initial_page);
+        app.ensure_page_init(flags.initial_page);
 
         (app, Task::none())
     }
@@ -72,6 +85,26 @@ impl Application for SettingsApp {
     }
 
     fn view(&self) -> Element<'_, Self::Message> {
+        if self.active_pages.is_empty() {
+            return container(
+                column![
+                    text::title3("No Applets Detected"),
+                    text::body(
+                        "No custom applets are currently active on the panel or dock.\n\
+                         Add an applet to the panel or dock, then reopen this settings app."
+                    ),
+                ]
+                .spacing(12)
+                .align_x(Alignment::Center),
+            )
+            .width(Length::Fill)
+            .height(Length::Fill)
+            .center_x(Length::Fill)
+            .center_y(Length::Fill)
+            .padding(32)
+            .into();
+        }
+
         let sidebar = self.sidebar_view();
         let page_content = self.page_view();
 
@@ -172,7 +205,7 @@ impl SettingsApp {
     fn sidebar_view(&self) -> Element<'_, Message> {
         let mut sidebar_items = column![].spacing(4).padding(8);
 
-        for &page in Page::ALL {
+        for &page in &self.active_pages {
             let is_active = page == self.active_page;
 
             let item_content = row![
@@ -190,7 +223,7 @@ impl SettingsApp {
             } else {
                 button::custom(item_content)
                     .on_press(Message::SelectPage(page))
-                    .class(cosmic::theme::Button::MenuItem)
+                    .class(cosmic::theme::Button::Text)
             };
 
             sidebar_items = sidebar_items.push(btn.width(Length::Fill).padding([8, 12]));
@@ -243,7 +276,7 @@ impl SettingsApp {
     }
 }
 
-pub fn run_app(initial_page: Page) -> cosmic::iced::Result {
+pub fn run_app(flags: AppFlags) -> cosmic::iced::Result {
     let settings = cosmic::app::Settings::default()
         .size(cosmic::iced::Size::new(900.0, 700.0))
         .size_limits(
@@ -251,5 +284,5 @@ pub fn run_app(initial_page: Page) -> cosmic::iced::Result {
                 .min_width(600.0)
                 .min_height(450.0),
         );
-    cosmic::app::run::<SettingsApp>(settings, initial_page)
+    cosmic::app::run::<SettingsApp>(settings, flags)
 }

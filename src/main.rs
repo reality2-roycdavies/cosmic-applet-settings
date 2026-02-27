@@ -1,6 +1,8 @@
 mod app;
+mod detection;
 mod pages;
 
+use app::AppFlags;
 use pages::Page;
 
 fn main() -> cosmic::iced::Result {
@@ -18,7 +20,11 @@ fn main() -> cosmic::iced::Result {
             }
             page_name => {
                 if let Some(page) = Page::from_cli_name(page_name) {
-                    app::run_app(page)
+                    let active_pages = detection::detect_active_pages();
+                    app::run_app(AppFlags {
+                        initial_page: page,
+                        active_pages,
+                    })
                 } else {
                     eprintln!("Unknown page: {page_name}");
                     eprintln!("Available pages:");
@@ -31,7 +37,12 @@ fn main() -> cosmic::iced::Result {
             }
         }
     } else {
-        app::run_app(Page::ALL[0])
+        let active_pages = detection::detect_active_pages();
+        let initial_page = active_pages.first().copied().unwrap_or(Page::ALL[0]);
+        app::run_app(AppFlags {
+            initial_page,
+            active_pages,
+        })
     }
 }
 
@@ -47,5 +58,6 @@ fn print_help(program: &str) {
     println!("  --version, -v      Show version information");
     println!("  --help, -h         Show this help message");
     println!();
-    println!("If no page is specified, the first page is shown.");
+    println!("If no page is specified, the first active page is shown.");
+    println!("Only pages for applets on the panel or dock are displayed.");
 }
