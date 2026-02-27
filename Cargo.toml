@@ -5,6 +5,10 @@ edition = "2021"
 authors = ["Roy C. Davies"]
 license = "MIT"
 description = "Unified settings app for custom COSMIC applets"
+keywords = ["cosmic-desktop", "settings", "cosmic-applet", "linux", "system76"]
+categories = ["gui"]
+repository = "https://github.com/reality2-roycdavies/cosmic-applet-settings"
+homepage = "https://github.com/reality2-roycdavies/cosmic-applet-settings"
 
 [dependencies]
 # COSMIC GUI toolkit (full app, not applet)
