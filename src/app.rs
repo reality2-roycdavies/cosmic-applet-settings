@@ -210,14 +210,15 @@ impl SettingsApp {
             } else {
                 button::custom(item_content)
                     .on_press(Message::SelectPage(page))
-                    .class(cosmic::theme::Button::Text)
+                    .class(cosmic::theme::Button::MenuItem)
             };
 
             sidebar_items = sidebar_items.push(btn.width(Length::Fill).padding([8, 12]));
         }
 
         container(sidebar_items)
-            .width(Length::Fixed(240.0))
+            .width(Length::Fixed(260.0))
+            .height(Length::Fill)
             .style(|theme: &cosmic::Theme| {
                 let cosmic = theme.cosmic();
                 container::Style {
