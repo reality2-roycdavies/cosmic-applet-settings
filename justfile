@@ -46,18 +46,16 @@ install-local:
     rm -f ~/.local/bin/{{name}}
     cp target/release/{{name}} ~/.local/bin/
 
-    # Install desktop entries (main + per-page)
+    # Install desktop entry
     mkdir -p ~/.local/share/applications
     cp resources/{{appid}}.desktop ~/.local/share/applications/
-    cp resources/{{appid}}.Tailscale.desktop ~/.local/share/applications/
-    cp resources/{{appid}}.RunKat.desktop ~/.local/share/applications/
-    cp resources/{{appid}}.BingWallpaper.desktop ~/.local/share/applications/
-    cp resources/{{appid}}.PieMenu.desktop ~/.local/share/applications/
-    cp resources/{{appid}}.Hotspot.desktop ~/.local/share/applications/
 
     # Install icon
     mkdir -p ~/.local/share/icons/hicolor/scalable/apps
     cp resources/{{appid}}.svg ~/.local/share/icons/hicolor/scalable/apps/
+
+    # Create registry directory for applet descriptors
+    mkdir -p ~/.local/share/cosmic-applet-settings/applets
 
     echo "Installation complete!"
 
@@ -65,11 +63,6 @@ install-local:
 uninstall-local:
     rm -f ~/.local/bin/{{name}}
     rm -f ~/.local/share/applications/{{appid}}.desktop
-    rm -f ~/.local/share/applications/{{appid}}.Tailscale.desktop
-    rm -f ~/.local/share/applications/{{appid}}.RunKat.desktop
-    rm -f ~/.local/share/applications/{{appid}}.BingWallpaper.desktop
-    rm -f ~/.local/share/applications/{{appid}}.PieMenu.desktop
-    rm -f ~/.local/share/applications/{{appid}}.Hotspot.desktop
     rm -f ~/.local/share/icons/hicolor/scalable/apps/{{appid}}.svg
 
 # Build and run

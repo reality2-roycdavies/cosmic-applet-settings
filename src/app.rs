@@ -1,45 +1,38 @@
 use cosmic::app::Core;
 use cosmic::iced::widget::{column, container, horizontal_space, row, scrollable};
-use cosmic::iced::{Alignment, Length};
-use cosmic::iced::Background;
+use cosmic::iced::{Alignment, Background, Length};
 use cosmic::widget::button::{self, Style as ButtonStyle};
 use cosmic::widget::{icon, text};
 use cosmic::{Action, Application, Element, Task};
-
-use cosmic_tailscale::settings_page as tailscale_page;
-use cosmic_runkat::settings_page as runkat_page;
-use cosmic_bing_wallpaper::settings_page as bing_wallpaper_page;
-use cosmic_pie_menu::settings_page as pie_menu_page;
-use cosmic_hotspot::settings_page as hotspot_page;
-
-use crate::pages::Page;
+use serde::Deserialize;
+use std::process::Command;
 
 const APP_ID: &str = "io.github.reality2_roycdavies.cosmic-applet-settings";
 
+/// A registered applet discovered from JSON files in the registry directory.
+#[derive(Debug, Clone, Deserialize)]
+pub struct AppletEntry {
+    pub name: String,
+    pub icon: String,
+    pub applet_id: String,
+    pub settings_cmd: String,
+}
+
 pub struct AppFlags {
-    pub initial_page: Page,
-    pub active_pages: Vec<Page>,
+    pub initial_applet_id: Option<String>,
+    pub active_applets: Vec<AppletEntry>,
 }
 
 pub struct SettingsApp {
     core: Core,
-    active_page: Page,
-    active_pages: Vec<Page>,
-    tailscale: Option<tailscale_page::State>,
-    runkat: Option<runkat_page::State>,
-    bing_wallpaper: Option<bing_wallpaper_page::State>,
-    pie_menu: Option<pie_menu_page::State>,
-    hotspot: Option<hotspot_page::State>,
+    selected: usize,
+    applets: Vec<AppletEntry>,
 }
 
 #[derive(Debug, Clone)]
 pub enum Message {
-    SelectPage(Page),
-    Tailscale(tailscale_page::Message),
-    RunKat(runkat_page::Message),
-    BingWallpaper(bing_wallpaper_page::Message),
-    PieMenu(pie_menu_page::Message),
-    Hotspot(hotspot_page::Message),
+    SelectApplet(usize),
+    OpenSettings(usize),
 }
 
 impl Application for SettingsApp {
@@ -58,26 +51,22 @@ impl Application for SettingsApp {
     }
 
     fn init(core: Core, flags: Self::Flags) -> (Self, Task<Action<Self::Message>>) {
-        let mut active_pages = flags.active_pages;
+        let selected = flags
+            .initial_applet_id
+            .as_ref()
+            .and_then(|id| {
+                flags
+                    .active_applets
+                    .iter()
+                    .position(|a| a.applet_id == *id)
+            })
+            .unwrap_or(0);
 
-        // If the initial page was explicitly requested but isn't in active_pages, include it
-        if !active_pages.contains(&flags.initial_page) {
-            active_pages.insert(0, flags.initial_page);
-        }
-
-        let mut app = Self {
+        let app = Self {
             core,
-            active_page: flags.initial_page,
-            active_pages,
-            tailscale: None,
-            runkat: None,
-            bing_wallpaper: None,
-            pie_menu: None,
-            hotspot: None,
+            selected,
+            applets: flags.active_applets,
         };
-
-        // Eagerly init the initial page
-        app.ensure_page_init(flags.initial_page);
 
         (app, Task::none())
     }
@@ -87,7 +76,7 @@ impl Application for SettingsApp {
     }
 
     fn view(&self) -> Element<'_, Self::Message> {
-        if self.active_pages.is_empty() {
+        if self.applets.is_empty() {
             return container(
                 column![
                     text::title3("No Applets Detected"),
@@ -126,33 +115,12 @@ impl Application for SettingsApp {
 
     fn update(&mut self, message: Self::Message) -> Task<Action<Self::Message>> {
         match message {
-            Message::SelectPage(page) => {
-                self.active_page = page;
-                self.ensure_page_init(page);
+            Message::SelectApplet(idx) => {
+                self.selected = idx;
             }
-            Message::Tailscale(msg) => {
-                if let Some(ref mut state) = self.tailscale {
-                    tailscale_page::update(state, msg);
-                }
-            }
-            Message::RunKat(msg) => {
-                if let Some(ref mut state) = self.runkat {
-                    runkat_page::update(state, msg);
-                }
-            }
-            Message::BingWallpaper(msg) => {
-                if let Some(ref mut state) = self.bing_wallpaper {
-                    bing_wallpaper_page::update(state, msg);
-                }
-            }
-            Message::PieMenu(msg) => {
-                if let Some(ref mut state) = self.pie_menu {
-                    pie_menu_page::update(state, msg);
-                }
-            }
-            Message::Hotspot(msg) => {
-                if let Some(ref mut state) = self.hotspot {
-                    hotspot_page::update(state, msg);
+            Message::OpenSettings(idx) => {
+                if let Some(entry) = self.applets.get(idx) {
+                    launch_settings_cmd(&entry.settings_cmd);
                 }
             }
         }
@@ -161,36 +129,6 @@ impl Application for SettingsApp {
 }
 
 impl SettingsApp {
-    fn ensure_page_init(&mut self, page: Page) {
-        match page {
-            Page::Tailscale => {
-                if self.tailscale.is_none() {
-                    self.tailscale = Some(tailscale_page::init());
-                }
-            }
-            Page::RunKat => {
-                if self.runkat.is_none() {
-                    self.runkat = Some(runkat_page::init());
-                }
-            }
-            Page::BingWallpaper => {
-                if self.bing_wallpaper.is_none() {
-                    self.bing_wallpaper = Some(bing_wallpaper_page::init());
-                }
-            }
-            Page::PieMenu => {
-                if self.pie_menu.is_none() {
-                    self.pie_menu = Some(pie_menu_page::init());
-                }
-            }
-            Page::Hotspot => {
-                if self.hotspot.is_none() {
-                    self.hotspot = Some(hotspot_page::init());
-                }
-            }
-        }
-    }
-
     fn sidebar_view(&self) -> Element<'_, Message> {
         let spacing = cosmic::theme::spacing();
         let space_xxs = spacing.space_xxs;
@@ -198,19 +136,19 @@ impl SettingsApp {
 
         let mut sidebar_items = column![].spacing(space_xxs).padding(space_xxs);
 
-        for &page in &self.active_pages {
-            let is_active = page == self.active_page;
+        for (idx, entry) in self.applets.iter().enumerate() {
+            let is_active = idx == self.selected;
 
             let item_content = row![
-                icon::from_name(page.icon_name()).size(20).symbolic(true),
-                text::body(page.title()),
+                icon::from_name(entry.icon.as_str()).size(20).symbolic(true),
+                text::body(&entry.name),
                 horizontal_space(),
             ]
             .spacing(space_xxs)
             .align_y(Alignment::Center);
 
             let btn = button::custom(item_content)
-                .on_press(Message::SelectPage(page))
+                .on_press(Message::SelectApplet(idx))
                 .class(if is_active {
                     nav_active_style()
                 } else {
@@ -243,43 +181,35 @@ impl SettingsApp {
     }
 
     fn page_view(&self) -> Element<'_, Message> {
-        match self.active_page {
-            Page::Tailscale => {
-                if let Some(ref state) = self.tailscale {
-                    tailscale_page::view(state).map(Message::Tailscale)
-                } else {
-                    text::body("Loading...").into()
-                }
-            }
-            Page::RunKat => {
-                if let Some(ref state) = self.runkat {
-                    runkat_page::view(state).map(Message::RunKat)
-                } else {
-                    text::body("Loading...").into()
-                }
-            }
-            Page::BingWallpaper => {
-                if let Some(ref state) = self.bing_wallpaper {
-                    bing_wallpaper_page::view(state).map(Message::BingWallpaper)
-                } else {
-                    text::body("Loading...").into()
-                }
-            }
-            Page::PieMenu => {
-                if let Some(ref state) = self.pie_menu {
-                    pie_menu_page::view(state).map(Message::PieMenu)
-                } else {
-                    text::body("Loading...").into()
-                }
-            }
-            Page::Hotspot => {
-                if let Some(ref state) = self.hotspot {
-                    hotspot_page::view(state).map(Message::Hotspot)
-                } else {
-                    text::body("Loading...").into()
-                }
-            }
-        }
+        let Some(entry) = self.applets.get(self.selected) else {
+            return text::body("No applet selected.").into();
+        };
+
+        let spacing = cosmic::theme::spacing();
+
+        column![
+            row![
+                icon::from_name(entry.icon.as_str()).size(48).symbolic(true),
+                column![
+                    text::title3(&entry.name),
+                    text::caption(&entry.applet_id),
+                ]
+                .spacing(4),
+            ]
+            .spacing(spacing.space_s)
+            .align_y(Alignment::Center),
+            cosmic::widget::button::standard("Open Settings")
+                .on_press(Message::OpenSettings(self.selected)),
+        ]
+        .spacing(spacing.space_m)
+        .into()
+    }
+}
+
+fn launch_settings_cmd(cmd: &str) {
+    let parts: Vec<&str> = cmd.split_whitespace().collect();
+    if let Some((program, args)) = parts.split_first() {
+        let _ = Command::new(program).args(args).spawn();
     }
 }
 

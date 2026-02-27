@@ -1,15 +1,15 @@
-use crate::pages::Page;
+use crate::app::AppletEntry;
 use std::fs;
 use std::path::PathBuf;
 
-/// Returns the list of pages whose applets are currently active on the COSMIC panel or dock.
-pub fn detect_active_pages() -> Vec<Page> {
+/// Returns only the applets whose applet_id appears in the COSMIC panel or dock config.
+pub fn filter_active_applets(applets: &[AppletEntry]) -> Vec<AppletEntry> {
     let combined = read_panel_configs();
 
-    Page::ALL
+    applets
         .iter()
-        .copied()
-        .filter(|page| combined.contains(page.applet_id()))
+        .filter(|entry| combined.contains(&entry.applet_id))
+        .cloned()
         .collect()
 }
 
