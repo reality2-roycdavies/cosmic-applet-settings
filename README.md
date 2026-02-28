@@ -98,6 +98,11 @@ The `--settings-describe` output defines the full UI:
 | `image` | Image preview with configurable height, card-styled container |
 | `list` | Scrollable list of items with thumbnails and per-item action buttons |
 
+## Screenshots
+
+![Settings hub overview showing all applets](screenshots/hub-overview.png)
+*The settings hub showing all registered applets*
+
 ## Installation
 
 ### Prerequisites
