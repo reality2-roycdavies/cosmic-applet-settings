@@ -9,7 +9,7 @@ use std::collections::HashMap;
 use std::io::{Read as _, Write as _};
 use std::os::unix::net::UnixListener;
 use std::path::PathBuf;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 const APP_ID: &str = "io.github.reality2_roycdavies.cosmic-applet-settings";
 
@@ -146,6 +146,8 @@ pub struct SettingsApp {
     text_displays: Vec<String>,
     // Confirmation state for destructive actions
     pending_confirm: Option<PendingConfirm>,
+    // Debounce: auto-commit text edits after a pause in typing
+    last_text_edit_time: Option<Instant>,
 }
 
 #[derive(Debug, Clone)]
@@ -166,6 +168,8 @@ pub enum Message {
     CancelConfirm,
     ActionCompleted(Result<String, String>),
     TextEditing(String, String),
+    TextUnfocused(String),
+    AutoFlushTextEdits,
     SliderChanged(String, f64),
     DropdownSelected(String, usize, Vec<SelectOption>),
 }
@@ -237,6 +241,7 @@ impl Application for SettingsApp {
             dropdown_labels: Vec::new(),
             text_displays: Vec::new(),
             pending_confirm: None,
+            last_text_edit_time: None,
         };
 
         let task = if has_applets {
@@ -294,18 +299,24 @@ impl Application for SettingsApp {
         let ipc_sub =
             cosmic::iced::time::every(Duration::from_millis(250)).map(|_| Message::CheckIpc);
 
+        let flush_sub = cosmic::iced::time::every(Duration::from_millis(500))
+            .map(|_| Message::AutoFlushTextEdits);
+
+        let mut subs = vec![ipc_sub, flush_sub];
+
         // Add refresh subscription if current schema has refresh_interval
         if let Some(ref schema) = self.current_schema {
             if let Some(interval) = schema.refresh_interval {
                 if interval > 0 {
-                    let refresh_sub = cosmic::iced::time::every(Duration::from_secs(interval))
-                        .map(|_| Message::RefreshSchema);
-                    return Subscription::batch(vec![ipc_sub, refresh_sub]);
+                    subs.push(
+                        cosmic::iced::time::every(Duration::from_secs(interval))
+                            .map(|_| Message::RefreshSchema),
+                    );
                 }
             }
         }
 
-        ipc_sub
+        Subscription::batch(subs)
     }
 
     fn update(&mut self, message: Self::Message) -> Task<Action<Self::Message>> {
@@ -503,7 +514,53 @@ impl Application for SettingsApp {
 
             Message::TextEditing(key, value) => {
                 self.text_edits.insert(key, value);
+                self.last_text_edit_time = Some(Instant::now());
                 self.rebuild_display_cache();
+            }
+
+            Message::TextUnfocused(key) => {
+                // Commit this text field immediately when it loses focus
+                if let Some(value) = self.text_edits.remove(&key) {
+                    self.last_text_edit_time = None;
+                    return Task::done(Action::App(Message::SettingChanged(
+                        key,
+                        serde_json::Value::String(value),
+                    )));
+                }
+            }
+
+            Message::AutoFlushTextEdits => {
+                // Debounce: commit pending text edits after 1s of no typing
+                if let Some(last_edit) = self.last_text_edit_time {
+                    if last_edit.elapsed() > Duration::from_secs(1)
+                        && !self.text_edits.is_empty()
+                    {
+                        self.last_text_edit_time = None;
+                        if let Some(entry) = self.applets.get(self.selected).cloned() {
+                            let binary = extract_binary(&entry.settings_cmd);
+                            let pending: Vec<(String, String)> = self
+                                .text_edits
+                                .drain()
+                                .map(|(k, v)| {
+                                    (k, serde_json::Value::String(v).to_string())
+                                })
+                                .collect();
+                            self.status_message = "Saving...".to_string();
+                            return Task::perform(
+                                async move {
+                                    let mut last_result =
+                                        Ok("Settings applied".to_string());
+                                    for (key, value) in pending {
+                                        last_result =
+                                            run_settings_set(&binary, &key, &value).await;
+                                    }
+                                    last_result
+                                },
+                                move |result| Action::App(Message::SettingApplied(result)),
+                            );
+                        }
+                    }
+                }
             }
 
             Message::SliderChanged(key, value) => {
@@ -860,6 +917,7 @@ impl SettingsApp {
                         let placeholder = item.placeholder.as_deref().unwrap_or("");
                         let key = item.key.clone();
                         let key2 = item.key.clone();
+                        let key3 = item.key.clone();
                         let display = &self.text_displays[txt_idx];
 
                         sec = sec.add(settings::item(
@@ -874,6 +932,7 @@ impl SettingsApp {
                                         serde_json::Value::String(v),
                                     )
                                 })
+                                .on_unfocus(Message::TextUnfocused(key3))
                                 .width(Length::Fixed(250.0)),
                         ));
                         txt_idx += 1;
