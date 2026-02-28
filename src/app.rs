@@ -531,6 +531,8 @@ impl Application for SettingsApp {
 
 impl SettingsApp {
     /// Dispatch an action to the applet CLI.
+    /// Flushes any pending text edits first so unsaved typing is committed
+    /// before the action runs.
     fn dispatch_action(
         &mut self,
         action_id: &str,
@@ -542,8 +544,21 @@ impl SettingsApp {
             let binary = extract_binary(&entry.settings_cmd);
             let id = action_id.to_string();
             let iid = item_id.map(|s| s.to_string());
+
+            // Flush pending text edits before dispatching the action
+            let pending: Vec<(String, String)> = self
+                .text_edits
+                .drain()
+                .map(|(k, v)| (k, serde_json::Value::String(v).to_string()))
+                .collect();
+
             return Task::perform(
-                async move { run_settings_action(&binary, &id, iid.as_deref()).await },
+                async move {
+                    for (key, value) in pending {
+                        let _ = run_settings_set(&binary, &key, &value).await;
+                    }
+                    run_settings_action(&binary, &id, iid.as_deref()).await
+                },
                 |result| Action::App(Message::ActionCompleted(result)),
             );
         }
