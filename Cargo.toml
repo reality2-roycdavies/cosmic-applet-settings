@@ -14,9 +14,13 @@ homepage = "https://github.com/reality2-roycdavies/cosmic-applet-settings"
 # COSMIC GUI toolkit (full app, not applet)
 libcosmic = { git = "https://github.com/pop-os/libcosmic.git", default-features = false, features = [
     "a11y",
+    "tokio",
     "winit",
     "wgpu",
 ] }
+
+# Async subprocess execution for settings protocol
+tokio = { version = "1", features = ["process"] }
 
 # Runtime detection
 dirs = "5"
